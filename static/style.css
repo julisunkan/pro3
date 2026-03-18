@@ -548,6 +548,16 @@ code {
 hr.divider { margin: 18px 0; }
 
 /* ─────────────────────────────────────────────
+   EDIT BUTTON
+───────────────────────────────────────────── */
+.btn-edit {
+  background: linear-gradient(135deg, var(--amber), var(--amber-lt));
+  color: #fff;
+  border-color: var(--amber);
+}
+.btn-edit:hover { opacity: 0.85; }
+
+/* ─────────────────────────────────────────────
    REPORT BUTTON
 ───────────────────────────────────────────── */
 .btn-report {
@@ -592,6 +602,13 @@ hr.divider { margin: 18px 0; }
   color: var(--text-muted);
   margin-bottom: 16px;
   line-height: 1.6;
+}
+.modal-box-lg {
+  max-width: 680px;
+}
+.modal-box-lg #edit-body {
+  min-height: 220px;
+  resize: vertical;
 }
 .modal-actions {
   display: flex;

@@ -22,13 +22,14 @@
         {% if email.replied %}<span class="badge badge-primary">Replied</span>{% endif %}
       </div>
     </div>
-    <div class="email-subject">📌 {{ email.subject }}</div>
-    <div class="email-body-preview">{{ email.body[:300] }}{% if email.body|length > 300 %}…{% endif %}</div>
+    <div class="email-subject" id="email-subject-{{ email.id }}">📌 {{ email.subject }}</div>
+    <div class="email-body-preview" id="email-body-preview-{{ email.id }}">{{ email.body[:300] }}{% if email.body|length > 300 %}…{% endif %}</div>
     <div class="email-actions">
       <a href="/export/{{ email.id }}/txt"  class="btn btn-xs">📄 TXT</a>
       <a href="/export/{{ email.id }}/html" class="btn btn-xs">🌐 HTML</a>
       <a href="/export/{{ email.id }}/pdf"  class="btn btn-xs">📑 PDF</a>
       <a href="/export/{{ email.id }}/docx" class="btn btn-xs">📝 DOCX</a>
+      <button class="btn btn-xs btn-edit" onclick="openEditModal({{ email.id }})">✏️ Edit</button>
       <button class="btn btn-xs btn-report" data-id="{{ email.id }}" onclick="openReportModal({{ email.id }})">🚩 Report</button>
       {% if not email.opened %}
       <button class="btn btn-xs btn-secondary" onclick="markOpened({{ email.id }}, this)">Mark Opened</button>
@@ -46,6 +47,25 @@
 </div>
 {% endif %}
 
+<!-- Edit Modal -->
+<div id="edit-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal-box modal-box-lg">
+    <h3 class="modal-title">✏️ Edit Email</h3>
+    <div class="form-group">
+      <label for="edit-subject">Subject</label>
+      <input type="text" id="edit-subject" placeholder="Email subject" />
+    </div>
+    <div class="form-group">
+      <label for="edit-body">Body</label>
+      <textarea id="edit-body" rows="12" placeholder="Email body…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="save-edit-btn" onclick="saveEdit()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Report Modal -->
 <div id="report-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeReportModal()">
   <div class="modal-box">
@@ -62,6 +82,63 @@
 
 {% block scripts %}
 <script>
+  const emailData = {
+    {% for email in emails %}
+    {{ email.id }}: { subject: {{ email.subject | tojson }}, body: {{ email.body | tojson }} }{% if not loop.last %},{% endif %}
+
+    {% endfor %}
+  };
+
+  let _editEmailId = null;
+
+  function openEditModal(emailId) {
+    const d = emailData[emailId];
+    if (!d) return;
+    _editEmailId = emailId;
+    document.getElementById('edit-subject').value = d.subject;
+    document.getElementById('edit-body').value = d.body;
+    document.getElementById('edit-modal').style.display = 'flex';
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+    _editEmailId = null;
+  }
+
+  async function saveEdit() {
+    if (!_editEmailId) return;
+    const btn = document.getElementById('save-edit-btn');
+    const subject = document.getElementById('edit-subject').value.trim();
+    const body = document.getElementById('edit-body').value.trim();
+    if (!subject || !body) { showMessage('Subject and body cannot be empty.', 'error'); return; }
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving…';
+    const fd = new FormData();
+    fd.append('subject', subject);
+    fd.append('body', body);
+    try {
+      const res = await fetch(`/email/${_editEmailId}/edit`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        emailData[_editEmailId].subject = data.subject;
+        emailData[_editEmailId].body = data.body;
+        const subjEl = document.getElementById(`email-subject-${_editEmailId}`);
+        const bodyEl = document.getElementById(`email-body-preview-${_editEmailId}`);
+        if (subjEl) subjEl.textContent = '📌 ' + data.subject;
+        if (bodyEl) bodyEl.textContent = data.body.length > 300 ? data.body.slice(0, 300) + '…' : data.body;
+        closeEditModal();
+        showMessage(data.message, 'success');
+      } else {
+        showMessage(data.message || 'Save failed.', 'error');
+      }
+    } catch {
+      showMessage('Network error. Please try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💾 Save Changes';
+    }
+  }
+
   let _reportEmailId = null;
 
   function openReportModal(emailId) {

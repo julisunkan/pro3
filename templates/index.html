@@ -83,14 +83,15 @@
           <th>Campaign</th>
           <th>Date</th>
           <th>Export</th>
+          <th>Edit</th>
           <th>Report</th>
         </tr>
       </thead>
       <tbody>
         {% for e in emails %}
-        <tr>
+        <tr id="email-row-{{ e.id }}">
           <td>{{ e.id }}</td>
-          <td>{{ e.subject }}</td>
+          <td class="email-subject-cell">{{ e.subject }}</td>
           <td>{{ e.campaign_name or '—' }}</td>
           <td>{{ e.created_at[:16] }}</td>
           <td>
@@ -98,6 +99,9 @@
             <a href="/export/{{ e.id }}/html" class="btn btn-xs">HTML</a>
             <a href="/export/{{ e.id }}/pdf"  class="btn btn-xs">PDF</a>
             <a href="/export/{{ e.id }}/docx" class="btn btn-xs">DOCX</a>
+          </td>
+          <td>
+            <button class="btn btn-xs btn-edit" onclick="openEditModal({{ e.id }})">✏️ Edit</button>
           </td>
           <td>
             <button class="btn btn-xs btn-report" data-id="{{ e.id }}" onclick="openReportModal({{ e.id }})">🚩 Report</button>
@@ -109,6 +113,25 @@
   </div>
 </div>
 {% endif %}
+
+<!-- Edit Modal -->
+<div id="edit-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal-box modal-box-lg">
+    <h3 class="modal-title">✏️ Edit Email</h3>
+    <div class="form-group">
+      <label for="edit-subject">Subject</label>
+      <input type="text" id="edit-subject" placeholder="Email subject" />
+    </div>
+    <div class="form-group">
+      <label for="edit-body">Body</label>
+      <textarea id="edit-body" rows="12" placeholder="Email body…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="save-edit-btn" onclick="saveEdit()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
 
 <!-- Report Modal -->
 <div id="report-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeReportModal()">
@@ -126,6 +149,61 @@
 
 {% block scripts %}
 <script>
+  const emailData = {
+    {% for e in emails %}
+    {{ e.id }}: { subject: {{ e.subject | tojson }}, body: {{ e.body | tojson }} }{% if not loop.last %},{% endif %}
+
+    {% endfor %}
+  };
+
+  let _editEmailId = null;
+
+  function openEditModal(emailId) {
+    const d = emailData[emailId];
+    if (!d) return;
+    _editEmailId = emailId;
+    document.getElementById('edit-subject').value = d.subject;
+    document.getElementById('edit-body').value = d.body;
+    document.getElementById('edit-modal').style.display = 'flex';
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+    _editEmailId = null;
+  }
+
+  async function saveEdit() {
+    if (!_editEmailId) return;
+    const btn = document.getElementById('save-edit-btn');
+    const subject = document.getElementById('edit-subject').value.trim();
+    const body = document.getElementById('edit-body').value.trim();
+    if (!subject || !body) { showMessage('Subject and body cannot be empty.', 'error'); return; }
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving…';
+    const fd = new FormData();
+    fd.append('subject', subject);
+    fd.append('body', body);
+    try {
+      const res = await fetch(`/email/${_editEmailId}/edit`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        emailData[_editEmailId].subject = data.subject;
+        emailData[_editEmailId].body = data.body;
+        const row = document.getElementById(`email-row-${_editEmailId}`);
+        if (row) row.querySelector('.email-subject-cell').textContent = data.subject;
+        closeEditModal();
+        showMessage(data.message, 'success');
+      } else {
+        showMessage(data.message || 'Save failed.', 'error');
+      }
+    } catch {
+      showMessage('Network error. Please try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💾 Save Changes';
+    }
+  }
+
   let _reportEmailId = null;
 
   function openReportModal(emailId) {

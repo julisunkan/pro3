@@ -313,6 +313,25 @@ def export_email(email_id, fmt):
 
 
 # ─────────────────────────────────────────────
+# EMAIL EDIT
+# ─────────────────────────────────────────────
+
+@app.route('/email/<int:email_id>/edit', methods=['POST'])
+def edit_email(email_id):
+    db = get_db()
+    email = db.execute('SELECT id FROM emails WHERE id = ?', (email_id,)).fetchone()
+    if not email:
+        return jsonify({'success': False, 'message': 'Email not found.'})
+    subject = request.form.get('subject', '').strip()
+    body = request.form.get('body', '').strip()
+    if not subject or not body:
+        return jsonify({'success': False, 'message': 'Subject and body cannot be empty.'})
+    db.execute('UPDATE emails SET subject = ?, body = ? WHERE id = ?', (subject, body, email_id))
+    db.commit()
+    return jsonify({'success': True, 'message': 'Email saved successfully.', 'subject': subject, 'body': body})
+
+
+# ─────────────────────────────────────────────
 # REPORTS
 # ─────────────────────────────────────────────
 
