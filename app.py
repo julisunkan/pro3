@@ -1,7 +1,6 @@
 import os
 import io
 import csv
-import json
 from flask import (
     Flask, render_template, request, redirect, url_for,
     flash, jsonify, send_file, make_response, g
@@ -335,6 +334,9 @@ def report_email(email_id):
 @app.route('/admin/reports/review/<int:report_id>', methods=['POST'])
 def review_report(report_id):
     db = get_db()
+    report = db.execute('SELECT id FROM reports WHERE id = ?', (report_id,)).fetchone()
+    if not report:
+        return jsonify({'success': False, 'message': 'Report not found.'})
     db.execute('UPDATE reports SET reviewed = 1 WHERE id = ?', (report_id,))
     db.commit()
     return jsonify({'success': True})

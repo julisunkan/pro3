@@ -16,17 +16,3 @@ def create_campaign(name: str, product: str, template_type: str, tone: str,
     campaign_id = cursor.lastrowid
     db.close()
     return campaign_id
-
-
-def get_campaign_leads(campaign_id: int) -> list:
-    """Return all leads associated with a campaign via its emails."""
-    db = sqlite3.connect(config.DATABASE_PATH)
-    db.row_factory = sqlite3.Row
-    leads = db.execute(
-        'SELECT DISTINCT l.* FROM leads l '
-        'JOIN emails e ON e.lead_id = l.id '
-        'WHERE e.campaign_id = ?',
-        (campaign_id,)
-    ).fetchall()
-    db.close()
-    return leads

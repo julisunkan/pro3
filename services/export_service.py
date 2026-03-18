@@ -2,7 +2,6 @@ import io
 from fpdf import FPDF
 from docx import Document
 from docx.shared import Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 # A4 page: 210mm wide, margins 20mm each side → 170mm usable
 PAGE_W = 170

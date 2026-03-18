@@ -56,7 +56,7 @@ John Doe,john@acme.com,Acme Corp,https://acme.com</pre>
           <td>{{ lead.company or '—' }}</td>
           <td>
             {% if lead.website %}
-              <a href="{{ lead.website }}" target="_blank" rel="noopener">{{ lead.website[:30] }}…</a>
+              <a href="{{ lead.website }}" target="_blank" rel="noopener">{{ lead.website[:30] }}{% if lead.website|length > 30 %}…{% endif %}</a>
             {% else %}—{% endif %}
           </td>
           <td>
