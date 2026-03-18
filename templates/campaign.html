@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Campaigns — Cold Email Generator{% endblock %}
+{% block page_title %}📢 Campaigns{% endblock %}
+
+{% block content %}
+<div class="two-col">
+  <!-- Create Campaign -->
+  <div class="card">
+    <h2 class="card-title">Create New Campaign</h2>
+    <form id="campaign-form">
+      <div class="form-group">
+        <label for="name">Campaign Name *</label>
+        <input type="text" id="name" name="name" placeholder="e.g. Q1 SaaS Outreach" required />
+      </div>
+      <div class="form-group">
+        <label for="product">Product / Service *</label>
+        <input type="text" id="product" name="product" placeholder="e.g. AI CRM Tool" required />
+      </div>
+      <div class="form-group">
+        <label for="pain_point">Pain Point</label>
+        <input type="text" id="pain_point" name="pain_point" placeholder="e.g. losing leads due to manual follow-up" />
+      </div>
+      <div class="form-group">
+        <label for="sender">Sender Name</label>
+        <input type="text" id="sender" name="sender" placeholder="e.g. Alex from Acme" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tone">Tone</label>
+          <select id="tone" name="tone">
+            <option value="friendly">Friendly</option>
+            <option value="formal">Formal</option>
+            <option value="persuasive">Persuasive</option>
+            <option value="humorous">Humorous</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="template_type">Template</label>
+          <select id="template_type" name="template_type">
+            <option value="short_pitch">Short Pitch</option>
+            <option value="problem_solution">Problem-Solution</option>
+            <option value="quick_intro">Quick Intro</option>
+            <option value="partnership">Partnership</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">➕ Create Campaign</button>
+    </form>
+  </div>
+
+  <!-- Info Card -->
+  <div class="card info-card">
+    <h3>How it works</h3>
+    <ol class="steps-list">
+      <li>Create a campaign with your product and settings</li>
+      <li>Upload leads (CSV) on the Leads page</li>
+      <li>Run the campaign to generate personalized emails for every lead</li>
+      <li>Export or review emails per campaign</li>
+    </ol>
+  </div>
+</div>
+
+<!-- Campaigns Table -->
+{% if campaigns %}
+<div class="card mt-4">
+  <h2 class="card-title">All Campaigns</h2>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Product</th>
+          <th>Template</th>
+          <th>Tone</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in campaigns %}
+        <tr>
+          <td>{{ c.id }}</td>
+          <td><strong>{{ c.name }}</strong></td>
+          <td>{{ c.product }}</td>
+          <td>{{ c.template_type }}</td>
+          <td><span class="badge badge-{{ c.tone }}">{{ c.tone }}</span></td>
+          <td>{{ c.created_at[:10] }}</td>
+          <td>
+            <button class="btn btn-primary btn-xs" onclick="runCampaign({{ c.id }}, this)">▶ Run</button>
+            <a href="/campaigns/{{ c.id }}/emails" class="btn btn-secondary btn-xs">📧 Emails</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card mt-4 empty-state">
+  <p>No campaigns yet. Create your first campaign above.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('campaign-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.textContent = '⏳ Creating...';
+    const fd = new FormData(e.target);
+    try {
+      const res = await fetch('/campaigns/create', { method: 'POST', body: fd });
+      const data = await res.json();
+      showMessage(data.message, data.success ? 'success' : 'error');
+      if (data.success) setTimeout(() => location.reload(), 1500);
+    } catch {
+      showMessage('Failed to create campaign.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '➕ Create Campaign';
+    }
+  });
+
+  async function runCampaign(id, btn) {
+    const cell = btn.parentElement;
+    const original = cell.innerHTML;
+
+    cell.innerHTML = `
+      <span style="font-size:0.85rem; margin-right:6px;">Generate emails for all leads?</span>
+      <button class="btn btn-primary btn-xs" id="confirm-run-${id}">✔ Yes, Run</button>
+      <button class="btn btn-secondary btn-xs" id="cancel-run-${id}">✖ Cancel</button>
+    `;
+
+    document.getElementById(`cancel-run-${id}`).addEventListener('click', () => {
+      cell.innerHTML = original;
+    });
+
+    document.getElementById(`confirm-run-${id}`).addEventListener('click', async () => {
+      cell.innerHTML = `<span style="font-size:0.85rem;">⏳ Running...</span>`;
+      try {
+        const res = await fetch(`/campaigns/${id}/run`, { method: 'POST' });
+        const data = await res.json();
+        showMessage(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 1500);
+      } catch {
+        showMessage('Campaign run failed.', 'error');
+      } finally {
+        cell.innerHTML = original;
+      }
+    });
+  }
+</script>
+{% endblock %}

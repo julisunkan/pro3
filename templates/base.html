@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2a1508" />
+  <meta name="description" content="AI-powered cold email generator for outreach campaigns" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/static/icons/icon-512.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/static/icons/icon-512.png" />
+  <title>{% block title %}Cold Email Generator{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">✉️</span>
+      <span class="brand-text">Cold Email<br><small>Generator</small></span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+        <span class="nav-icon">🏠</span> Generator
+      </a></li>
+      <li><a href="/leads" class="nav-link {% if request.path.startswith('/leads') %}active{% endif %}">
+        <span class="nav-icon">👥</span> Leads
+      </a></li>
+      <li><a href="/campaigns" class="nav-link {% if request.path.startswith('/campaigns') %}active{% endif %}">
+        <span class="nav-icon">📢</span> Campaigns
+      </a></li>
+      <li><a href="/analytics" class="nav-link {% if request.path.startswith('/analytics') %}active{% endif %}">
+        <span class="nav-icon">📊</span> Analytics
+      </a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="topbar">
+      <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+    </div>
+
+    <!-- Inline message container -->
+    <div id="message" class="message-container" style="display:none"></div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    // ── Inline message helper ──
+    function showMessage(text, type) {
+      const el = document.getElementById('message');
+      el.className = 'message-container alert alert-' + (type || 'info');
+      el.textContent = text;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    // ── Register service worker ──
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+        .catch(() => {});
+    }
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

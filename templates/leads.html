@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Leads — Cold Email Generator{% endblock %}
+{% block page_title %}👥 Lead Management{% endblock %}
+
+{% block content %}
+<div class="two-col">
+  <!-- Upload Card -->
+  <div class="card">
+    <h2 class="card-title">Upload Leads (CSV)</h2>
+    <p class="text-muted">CSV must have columns: <code>name, email, company, website</code></p>
+    <form id="upload-form" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="csv_file">Select CSV File</label>
+        <input type="file" id="csv_file" name="csv_file" accept=".csv" required />
+      </div>
+      <button type="submit" class="btn btn-primary">📤 Upload Leads</button>
+    </form>
+
+    <div class="mt-4">
+      <h3 class="card-subtitle">Sample CSV format</h3>
+      <pre class="code-block">name,email,company,website
+Sarah Kim,sarah@stripe.com,Stripe,https://stripe.com
+John Doe,john@acme.com,Acme Corp,https://acme.com</pre>
+    </div>
+  </div>
+
+  <!-- Stats Card -->
+  <div class="card stat-card">
+    <div class="stat-number">{{ leads|length }}</div>
+    <div class="stat-label">Total Leads</div>
+  </div>
+</div>
+
+<!-- Leads Table -->
+{% if leads %}
+<div class="card mt-4">
+  <h2 class="card-title">All Leads</h2>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Company</th>
+          <th>Website</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lead in leads %}
+        <tr id="lead-row-{{ lead.id }}">
+          <td>{{ lead.id }}</td>
+          <td>{{ lead.name or '—' }}</td>
+          <td>{{ lead.email }}</td>
+          <td>{{ lead.company or '—' }}</td>
+          <td>
+            {% if lead.website %}
+              <a href="{{ lead.website }}" target="_blank" rel="noopener">{{ lead.website[:30] }}…</a>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <button class="btn btn-danger btn-xs" onclick="deleteLead({{ lead.id }})">🗑 Delete</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card mt-4 empty-state">
+  <p>No leads yet. Upload a CSV file to get started.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('upload-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.textContent = '⏳ Uploading...';
+    const fd = new FormData(e.target);
+    try {
+      const res = await fetch('/leads/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      showMessage(data.message, data.success ? 'success' : 'error');
+      if (data.success) setTimeout(() => location.reload(), 1500);
+    } catch {
+      showMessage('Upload failed. Please try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '📤 Upload Leads';
+    }
+  });
+
+  async function deleteLead(id) {
+    const cell = document.querySelector(`#lead-row-${id} td:last-child`);
+    const original = cell.innerHTML;
+
+    cell.innerHTML = `
+      <span style="font-size:0.85rem; margin-right:6px;">Delete this lead?</span>
+      <button class="btn btn-danger btn-xs" id="confirm-del-${id}">✔ Yes</button>
+      <button class="btn btn-secondary btn-xs" id="cancel-del-${id}">✖ No</button>
+    `;
+
+    document.getElementById(`cancel-del-${id}`).addEventListener('click', () => {
+      cell.innerHTML = original;
+    });
+
+    document.getElementById(`confirm-del-${id}`).addEventListener('click', async () => {
+      const res = await fetch(`/leads/delete/${id}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById(`lead-row-${id}`)?.remove();
+        showMessage('Lead deleted.', 'success');
+      } else {
+        cell.innerHTML = original;
+        showMessage('Failed to delete lead.', 'error');
+      }
+    });
+  }
+</script>
+{% endblock %}

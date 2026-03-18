@@ -1,0 +1,55 @@
+Cold Email Generator — AI-Powered Outreach Platform
+=====================================================
+
+SHORT DESCRIPTION (up to 255 characters):
+Generate personalized AI cold emails in seconds. Upload leads, run campaigns, track analytics, and export to PDF, HTML, TXT, or DOCX — all powered by Groq's lightning-fast LLaMA AI.
+
+
+FULL DESCRIPTION:
+-----------------
+
+Cold Email Generator is a professional AI-powered outreach platform that helps sales teams, freelancers, marketers, and entrepreneurs craft personalized cold emails at scale — without the guesswork.
+
+Powered by Groq's blazing-fast LLaMA 3 model, every email is uniquely tailored to your product, audience, and tone. Simply describe your offer, pick a template, and let the AI do the heavy lifting.
+
+
+KEY FEATURES:
+-------------
+
+AI Email Generation
+Generate high-converting cold emails in seconds using four proven frameworks — Short Pitch, Problem-Solution, Quick Intro, and Partnership. Choose from four tones: Formal, Friendly, Persuasive, and Humorous.
+
+Lead Management
+Upload your leads via CSV (name, email, company, website) and manage your entire prospect list from one clean dashboard.
+
+AI Personalization
+Each lead receives a unique, personalized opening line based on their company website — scraped automatically using intelligent web parsing.
+
+Campaign Engine
+Group emails into named campaigns with custom products, tones, and templates. Run a full campaign to generate personalized emails for every lead in one click.
+
+Campaign Analytics
+Track opens, replies, open rate, and reply rate per campaign. Visualize performance with a built-in analytics dashboard.
+
+Export Anywhere
+Download any generated email as a formatted PDF, clean HTML, plain TXT, or Word DOCX file — all handled server-side for reliability.
+
+Admin Panel
+Customize the AI model, default sender name, tone, template, and your Groq API key — all from a built-in settings panel. No code required.
+
+Progressive Web App
+Install Cold Email Generator directly to your desktop or mobile device for a native app experience — works offline for cached pages.
+
+
+WHO IS THIS FOR?
+----------------
+- Sales development representatives (SDRs)
+- Freelancers pitching new clients
+- Startup founders doing early outreach
+- Digital marketing agencies
+- Recruiters and business development teams
+
+
+KEYWORDS:
+---------
+cold email, email generator, AI email writer, outreach tool, sales automation, lead management, campaign manager, email personalization, LLaMA AI, Groq AI, cold outreach, email marketing, B2B sales, SDR tool, prospecting tool, email template, bulk email generator, AI copywriter, sales emails, email analytics, email exporter, PDF email export, DOCX export, PWA app, email campaign tracker, personalized email, lead scraper, startup outreach, freelancer tool, email productivity

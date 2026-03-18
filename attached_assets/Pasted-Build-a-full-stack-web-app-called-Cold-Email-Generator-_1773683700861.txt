@@ -1,0 +1,262 @@
+Build a full stack web app called "Cold Email Generator".
+
+Tech stack:
+- Python
+- Flask
+- SQLite database
+- Groq API (LLM)
+- Pandas
+- BeautifulSoup
+- FPDF
+- Progressive Web App (PWA)
+
+The app generates AI-powered cold outreach emails and supports campaigns, lead personalization, and analytics. with admin panel to customize settings, no user login, just admin panel
+
+========================
+CORE FEATURES
+========================
+
+1. Email Generator
+Users input:
+- product name
+- target audience
+- pain point
+- tone (formal, friendly, persuasive, humorous)
+- template type
+
+Use Groq API with llama3-70b-8192 to generate a cold email.
+
+Store generated emails in SQLite.
+
+========================
+EMAIL TEMPLATES
+========================
+
+Include built-in templates:
+
+1. short_pitch
+2. problem_solution
+3. quick_intro
+4. partnership
+
+Templates must support personalization variables:
+
+{{name}}
+{{company}}
+{{product}}
+{{pain_point}}
+{{sender}}
+
+========================
+LEAD MANAGEMENT
+========================
+
+Allow CSV upload with fields:
+
+name,email,company,website
+
+Store leads in SQLite.
+
+========================
+LEAD SCRAPING
+========================
+
+Use requests + BeautifulSoup to scrape the company website.
+
+Extract the first few paragraphs from the homepage.
+
+Use that text as context for AI personalization.
+
+========================
+AI PERSONALIZATION
+========================
+
+Generate a unique intro line for each lead using Groq.
+
+Example:
+
+"Hi Sarah — I saw Stripe is helping companies scale global payments."
+
+Each lead should receive a different personalized email.
+
+========================
+BULK EMAIL GENERATION
+========================
+
+Allow a campaign to generate emails for multiple leads.
+
+Campaign fields:
+- campaign name
+- product
+- template
+- tone
+
+Generate personalized emails for every lead.
+
+========================
+CAMPAIGN ANALYTICS
+========================
+
+Track for each campaign:
+
+- total emails
+- opens
+- replies
+- open rate
+- reply rate
+
+Create a dashboard page showing the metrics.
+
+========================
+EXPORT OPTIONS
+========================
+
+Users can export generated emails as:
+
+- TXT
+- HTML
+- PDF
+
+Downloads must be handled server-side using Flask send_file.
+Do NOT use browser Blob downloads.
+
+========================
+UI REQUIREMENTS
+========================
+
+Use simple modern UI with:
+
+- clean layout
+- mobile friendly design
+- inline messages instead of alert popups
+
+Create a message container:
+
+#message
+
+Display success and error messages inline.
+
+========================
+PROGRESSIVE WEB APP
+========================
+
+Convert the app into a PWA.
+
+Create:
+
+manifest.json
+service-worker.js
+
+Manifest settings:
+
+name: Cold Email Generator
+display: standalone
+theme_color: #2563eb
+background_color: #0f172a
+
+Include two icons:
+
+/static/icons/icon-512.png
+/static/icons/icon-maskable-512.png
+
+Maskable icon must use purpose:"maskable".
+
+Register the service worker in the base template.
+
+Cache:
+- homepage
+- CSS
+- JS
+- icons
+
+Add install prompt button.
+
+========================
+APP ICON DESIGN
+========================
+
+Generate a colorful 512x512 PNG icon:
+
+Design:
+- blue → purple gradient background
+- envelope symbol
+- AI sparkle element
+
+Also generate a maskable icon with padded safe area.
+
+========================
+PROJECT STRUCTURE
+========================
+
+cold-email-generator/
+
+app.py
+config.py
+database.db
+requirements.txt
+
+models/
+db.py
+
+services/
+ai_service.py
+lead_scraper.py
+personalization.py
+campaign_service.py
+analytics.py
+export_service.py
+
+templates/
+base.html
+index.html
+campaign.html
+analytics.html
+
+static/
+style.css
+manifest.json
+service-worker.js
+icons/
+
+========================
+DATABASE TABLES
+========================
+
+leads
+campaigns
+emails
+
+emails table fields:
+
+id
+campaign_id
+lead_id
+subject
+body
+opened
+replied
+created_at
+
+========================
+ADDITIONAL REQUIREMENTS
+========================
+
+- Use environment variable for GROQ_API_KEY
+- Use Flask templates
+- Write clean modular code
+- Include comments
+- Handle errors gracefully
+- Make the UI responsive
+
+========================
+FINAL RESULT
+========================
+
+The app should allow users to:
+
+1. Upload leads
+2. Create campaigns
+3. Generate personalized AI cold emails
+4. Export emails
+5. View analytics dashboard
+6. Install the app as a PWA

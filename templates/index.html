@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Email Generator — Cold Email Generator{% endblock %}
+{% block page_title %}✉️ Email Generator{% endblock %}
+
+{% block content %}
+<div class="gen-grid" id="gen-grid">
+  <!-- Generator Form -->
+  <div class="card">
+    <h2 class="card-title">Generate Cold Email</h2>
+    <form id="gen-form">
+      <div class="form-group">
+        <label for="product">Product / Service *</label>
+        <input type="text" id="product" name="product" placeholder="e.g. SaaS CRM Tool" required />
+      </div>
+      <div class="form-group">
+        <label for="audience">Target Audience *</label>
+        <input type="text" id="audience" name="audience" placeholder="e.g. SaaS startup founders" required />
+      </div>
+      <div class="form-group">
+        <label for="pain_point">Pain Point *</label>
+        <input type="text" id="pain_point" name="pain_point" placeholder="e.g. losing leads due to manual follow-up" required />
+      </div>
+      <div class="form-group">
+        <label for="sender">Your Name / Sender</label>
+        <input type="text" id="sender" name="sender" placeholder="e.g. Alex from Acme" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tone">Tone</label>
+          <select id="tone" name="tone">
+            <option value="friendly">Friendly</option>
+            <option value="formal">Formal</option>
+            <option value="persuasive">Persuasive</option>
+            <option value="humorous">Humorous</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="template_type">Template</label>
+          <select id="template_type" name="template_type">
+            <option value="short_pitch">Short Pitch</option>
+            <option value="problem_solution">Problem-Solution</option>
+            <option value="quick_intro">Quick Intro</option>
+            <option value="partnership">Partnership</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" id="gen-btn">
+        ✨ Generate Email
+      </button>
+    </form>
+  </div>
+
+  <!-- Result Panel -->
+  <div class="card" id="result-panel" style="display:none">
+    <h2 class="card-title">Generated Email</h2>
+    <div class="form-group">
+      <label>Subject</label>
+      <div class="result-box" id="result-subject"></div>
+    </div>
+    <div class="form-group">
+      <label>Body</label>
+      <div class="result-box result-body" id="result-body"></div>
+    </div>
+    <div class="export-buttons" id="export-buttons" style="display:none">
+      <a id="export-txt"  href="#" class="btn btn-secondary">📄 TXT</a>
+      <a id="export-html" href="#" class="btn btn-secondary">🌐 HTML</a>
+      <a id="export-pdf"  href="#" class="btn btn-secondary">📑 PDF</a>
+      <a id="export-docx" href="#" class="btn btn-secondary">📝 DOCX</a>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Emails -->
+{% if emails %}
+<div class="card mt-4">
+  <h2 class="card-title">Recent Emails</h2>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Subject</th>
+          <th>Campaign</th>
+          <th>Date</th>
+          <th>Export</th>
+          <th>Report</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in emails %}
+        <tr>
+          <td>{{ e.id }}</td>
+          <td>{{ e.subject }}</td>
+          <td>{{ e.campaign_name or '—' }}</td>
+          <td>{{ e.created_at[:16] }}</td>
+          <td>
+            <a href="/export/{{ e.id }}/txt"  class="btn btn-xs">TXT</a>
+            <a href="/export/{{ e.id }}/html" class="btn btn-xs">HTML</a>
+            <a href="/export/{{ e.id }}/pdf"  class="btn btn-xs">PDF</a>
+            <a href="/export/{{ e.id }}/docx" class="btn btn-xs">DOCX</a>
+          </td>
+          <td>
+            <button class="btn btn-xs btn-report" data-id="{{ e.id }}" onclick="openReportModal({{ e.id }})">🚩 Report</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Report Modal -->
+<div id="report-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeReportModal()">
+  <div class="modal-box">
+    <h3 class="modal-title">🚩 Report Inappropriate Content</h3>
+    <p class="modal-desc">Please describe why you are reporting this email.</p>
+    <textarea id="report-reason" placeholder="e.g. Contains offensive language, spam, misleading content…" rows="4"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeReportModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="submit-report-btn" onclick="submitReport()">Submit Report</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let _reportEmailId = null;
+
+  function openReportModal(emailId) {
+    _reportEmailId = emailId;
+    document.getElementById('report-reason').value = '';
+    document.getElementById('report-modal').style.display = 'flex';
+  }
+
+  function closeReportModal() {
+    document.getElementById('report-modal').style.display = 'none';
+    _reportEmailId = null;
+  }
+
+  async function submitReport() {
+    if (!_reportEmailId) return;
+    const btn = document.getElementById('submit-report-btn');
+    const reason = document.getElementById('report-reason').value.trim();
+    btn.disabled = true;
+    btn.textContent = '⏳ Submitting…';
+    const fd = new FormData();
+    fd.append('reason', reason);
+    try {
+      const res = await fetch(`/report/${_reportEmailId}`, { method: 'POST', body: fd });
+      const data = await res.json();
+      closeReportModal();
+      if (data.success) {
+        showMessage(data.message, 'success');
+        const reportBtn = document.querySelector(`.btn-report[data-id="${_reportEmailId}"]`);
+        if (reportBtn) { reportBtn.disabled = true; reportBtn.textContent = '✓ Reported'; }
+      } else {
+        showMessage(data.message || 'Failed to submit report.', 'error');
+      }
+    } catch {
+      showMessage('Network error. Please try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit Report';
+    }
+  }
+
+  document.getElementById('gen-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Generating...';
+
+    const fd = new FormData(e.target);
+    try {
+      const res = await fetch('/generate', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('result-subject').textContent = data.subject;
+        document.getElementById('result-body').textContent = data.body;
+        document.getElementById('result-panel').style.display = 'block';
+        document.getElementById('gen-grid').classList.add('has-result');
+
+        const id = data.email_id;
+        document.getElementById('export-txt').href  = `/export/${id}/txt`;
+        document.getElementById('export-html').href = `/export/${id}/html`;
+        document.getElementById('export-pdf').href  = `/export/${id}/pdf`;
+        document.getElementById('export-docx').href = `/export/${id}/docx`;
+        document.getElementById('export-buttons').style.display = 'flex';
+
+        showMessage('Email generated successfully!', 'success');
+      } else {
+        showMessage(data.message || 'Generation failed.', 'error');
+      }
+    } catch (err) {
+      showMessage('Network error. Please try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✨ Generate Email';
+    }
+  });
+</script>
+{% endblock %}

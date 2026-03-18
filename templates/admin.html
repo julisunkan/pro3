@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Admin — Cold Email Generator{% endblock %}
+{% block page_title %}⚙️ Admin Panel{% endblock %}
+
+{% block content %}
+<div class="two-col">
+  <!-- Settings Form -->
+  <div class="card">
+    <h2 class="card-title">App Settings</h2>
+    <form id="settings-form">
+
+      <!-- API Key section -->
+      <div class="api-key-section">
+        <div class="form-group">
+          <label for="groq_api_key">
+            Groq API Key
+            <a href="https://console.groq.com" target="_blank" rel="noopener" class="label-link">Get free key →</a>
+          </label>
+          <div class="input-reveal-wrap">
+            <input type="password" id="groq_api_key" name="groq_api_key"
+                   value="{{ settings.get('groq_api_key', '') }}"
+                   placeholder="gsk_..." autocomplete="off" />
+            <button type="button" class="reveal-btn" onclick="toggleReveal(this)">👁</button>
+          </div>
+          {% if settings.get('groq_api_key') %}
+          <p class="field-hint field-hint-success">✅ API key is configured</p>
+          {% else %}
+          <p class="field-hint field-hint-warn">⚠️ No API key set — email generation will be disabled</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="form-group">
+        <label for="app_name">App Name</label>
+        <input type="text" id="app_name" name="app_name"
+               value="{{ settings.get('app_name', 'Cold Email Generator') }}" />
+      </div>
+      <div class="form-group">
+        <label for="default_sender">Default Sender Name</label>
+        <input type="text" id="default_sender" name="default_sender"
+               value="{{ settings.get('default_sender', '') }}"
+               placeholder="e.g. Alex from Acme" />
+      </div>
+      <div class="form-group">
+        <label for="groq_model">Groq Model</label>
+        <select id="groq_model" name="groq_model">
+          <option value="llama-3.3-70b-versatile" {% if settings.get('groq_model','llama-3.3-70b-versatile') in ('llama-3.3-70b-versatile','llama3-70b-8192','') %}selected{% endif %}>llama-3.3-70b-versatile (default)</option>
+          <option value="llama-3.1-70b-versatile" {% if settings.get('groq_model') == 'llama-3.1-70b-versatile' %}selected{% endif %}>llama-3.1-70b-versatile</option>
+          <option value="llama-3.1-8b-instant" {% if settings.get('groq_model') in ('llama-3.1-8b-instant','llama3-8b-8192') %}selected{% endif %}>llama-3.1-8b-instant (faster)</option>
+          <option value="llama3-70b-8192" {% if settings.get('groq_model') == 'llama3-70b-8192' %}selected{% endif %}>llama3-70b-8192 (legacy)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="default_tone">Default Tone</label>
+          <select id="default_tone" name="default_tone">
+            {% for tone in ['friendly', 'formal', 'persuasive', 'humorous'] %}
+            <option value="{{ tone }}" {% if settings.get('default_tone','friendly') == tone %}selected{% endif %}>{{ tone|capitalize }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="default_template">Default Template</label>
+          <select id="default_template" name="default_template">
+            {% for k, v in [('short_pitch','Short Pitch'),('problem_solution','Problem-Solution'),('quick_intro','Quick Intro'),('partnership','Partnership')] %}
+            <option value="{{ k }}" {% if settings.get('default_template','short_pitch') == k %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+    </form>
+  </div>
+
+  <!-- Info / Tips Card -->
+  <div class="card info-card">
+    <h3>About Templates</h3>
+    <ul class="info-list">
+      <li><strong>Short Pitch</strong> — Under 150 words, direct ask</li>
+      <li><strong>Problem-Solution</strong> — Identify pain, offer fix</li>
+      <li><strong>Quick Intro</strong> — Brief intro + CTA</li>
+      <li><strong>Partnership</strong> — Collaboration angle</li>
+    </ul>
+    <hr class="divider" />
+    <h3>Personalization Variables</h3>
+    <ul class="info-list">
+      <li><code>&#123;&#123;name&#125;&#125;</code> — Lead's name</li>
+      <li><code>&#123;&#123;company&#125;&#125;</code> — Lead's company</li>
+      <li><code>&#123;&#123;product&#125;&#125;</code> — Your product</li>
+      <li><code>&#123;&#123;pain_point&#125;&#125;</code> — Pain point</li>
+      <li><code>&#123;&#123;sender&#125;&#125;</code> — Sender name</li>
+    </ul>
+    <hr class="divider" />
+    <h3>Getting a Groq API Key</h3>
+    <ol class="steps-list">
+      <li>Visit <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a></li>
+      <li>Sign up for a free account</li>
+      <li>Go to API Keys → Create API key</li>
+      <li>Paste it in the field on the left and save</li>
+    </ol>
+  </div>
+</div>
+
+<!-- Reported Content -->
+<div class="card mt-4">
+  <h2 class="card-title">🚩 Reported Content</h2>
+  {% set pending = reports | selectattr('reviewed', 'equalto', 0) | list %}
+  {% set reviewed = reports | selectattr('reviewed', 'equalto', 1) | list %}
+  {% if reports %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Report #</th>
+          <th>Email #</th>
+          <th>Subject</th>
+          <th>Reason</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reports %}
+        <tr id="report-row-{{ r.id }}" {% if r.reviewed %}style="opacity:0.5"{% endif %}>
+          <td>{{ r.id }}</td>
+          <td>{{ r.email_id }}</td>
+          <td>{{ r.subject or '—' }}</td>
+          <td>{{ r.reason or '(no reason provided)' }}</td>
+          <td>{{ r.reported_at[:16] }}</td>
+          <td>
+            {% if r.reviewed %}
+            <span class="badge badge-neutral">Reviewed</span>
+            {% else %}
+            <span class="badge badge-primary">Pending</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if not r.reviewed %}
+            <button class="btn btn-xs btn-secondary" onclick="markReviewed({{ r.id }}, this)">✓ Mark Reviewed</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="field-hint" style="margin-top:12px">{{ pending|length }} pending &nbsp;·&nbsp; {{ reviewed|length }} reviewed</p>
+  {% else %}
+  <p class="empty-state">No reports yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  async function markReviewed(reportId, btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳';
+    try {
+      const res = await fetch(`/admin/reports/review/${reportId}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        const row = document.getElementById(`report-row-${reportId}`);
+        row.style.opacity = '0.5';
+        btn.closest('td').innerHTML = '';
+        const statusCell = row.querySelector('td:nth-child(6)');
+        if (statusCell) statusCell.innerHTML = '<span class="badge badge-neutral">Reviewed</span>';
+        showMessage('Report marked as reviewed.', 'success');
+      }
+    } catch {
+      btn.disabled = false;
+      btn.textContent = '✓ Mark Reviewed';
+      showMessage('Failed to update report.', 'error');
+    }
+  }
+
+  function toggleReveal(btn) {
+    const input = btn.previousElementSibling;
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      btn.textContent = '👁';
+    }
+  }
+
+  document.getElementById('settings-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving...';
+    const fd = new FormData(e.target);
+    try {
+      const res = await fetch('/admin/save', { method: 'POST', body: fd });
+      const data = await res.json();
+      showMessage(data.message, data.success ? 'success' : 'error');
+      if (data.success) setTimeout(() => location.reload(), 1200);
+    } catch {
+      showMessage('Failed to save settings.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💾 Save Settings';
+    }
+  });
+</script>
+{% endblock %}

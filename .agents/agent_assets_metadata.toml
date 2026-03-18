@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "qGu7J3yUBDqyAGq61n-hb"
+uri = "file://app_store_description.txt"
+type = "text"
+title = "Microsoft Store Description"

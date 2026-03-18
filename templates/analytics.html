@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Analytics — Cold Email Generator{% endblock %}
+{% block page_title %}📊 Analytics Dashboard{% endblock %}
+
+{% block content %}
+<!-- Summary Stats -->
+<div class="stats-grid">
+  <div class="stat-card card">
+    <div class="stat-number">{{ total_emails }}</div>
+    <div class="stat-label">Total Emails</div>
+  </div>
+  <div class="stat-card card">
+    <div class="stat-number">{{ campaigns|length }}</div>
+    <div class="stat-label">Campaigns</div>
+  </div>
+  <div class="stat-card card">
+    {% set total_opens = campaigns|sum(attribute='opens') %}
+    <div class="stat-number">{{ total_opens }}</div>
+    <div class="stat-label">Total Opens</div>
+  </div>
+  <div class="stat-card card">
+    {% set total_replies = campaigns|sum(attribute='replies') %}
+    <div class="stat-number">{{ total_replies }}</div>
+    <div class="stat-label">Total Replies</div>
+  </div>
+</div>
+
+<!-- Campaign Breakdown -->
+{% if campaigns %}
+<div class="card mt-4">
+  <h2 class="card-title">Campaign Performance</h2>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Campaign</th>
+          <th>Emails</th>
+          <th>Opens</th>
+          <th>Open Rate</th>
+          <th>Replies</th>
+          <th>Reply Rate</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in campaigns %}
+        <tr>
+          <td><strong>{{ c.name }}</strong></td>
+          <td>{{ c.total }}</td>
+          <td>{{ c.opens }}</td>
+          <td>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" style="width: {{ c.open_rate }}%"></div>
+              <span>{{ c.open_rate }}%</span>
+            </div>
+          </td>
+          <td>{{ c.replies }}</td>
+          <td>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar progress-bar-reply" style="width: {{ c.reply_rate }}%"></div>
+              <span>{{ c.reply_rate }}%</span>
+            </div>
+          </td>
+          <td>
+            <a href="/campaigns/{{ c.id }}/emails" class="btn btn-xs">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card mt-4 empty-state">
+  <p>No campaigns found. Create and run a campaign to see analytics.</p>
+</div>
+{% endif %}
+{% endblock %}
