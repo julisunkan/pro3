@@ -163,8 +163,8 @@
     try {
       const res = await fetch(`/report/${_reportEmailId}`, { method: 'POST', body: fd });
       const data = await res.json();
-      closeReportModal();
       if (data.success) {
+        closeReportModal();
         showMessage(data.message, 'success');
         const reportBtn = document.querySelector(`.btn-report[data-id="${_reportEmailId}"]`);
         if (reportBtn) { reportBtn.disabled = true; reportBtn.textContent = '✓ Reported'; }
@@ -183,16 +183,41 @@
     try {
       const res = await fetch(`/analytics/mark-opened/${id}`, { method: 'POST' });
       const data = await res.json();
-      if (data.success) { btn.remove(); showMessage('Marked as opened.', 'success'); }
-      else { showMessage('Failed to mark as opened.', 'error'); }
+      if (data.success) {
+        btn.remove();
+        const card = document.getElementById(`email-subject-${id}`)?.closest('.email-card');
+        if (card) {
+          const statusDiv = card.querySelector('.email-status');
+          if (statusDiv && !statusDiv.querySelector('.badge-success')) {
+            const badge = document.createElement('span');
+            badge.className = 'badge badge-success';
+            badge.textContent = 'Opened';
+            statusDiv.prepend(badge);
+          }
+        }
+        showMessage('Marked as opened.', 'success');
+      } else { showMessage('Failed to mark as opened.', 'error'); }
     } catch { showMessage('Network error.', 'error'); }
   }
+
   async function markReplied(id, btn) {
     try {
       const res = await fetch(`/analytics/mark-replied/${id}`, { method: 'POST' });
       const data = await res.json();
-      if (data.success) { btn.remove(); showMessage('Marked as replied.', 'success'); }
-      else { showMessage('Failed to mark as replied.', 'error'); }
+      if (data.success) {
+        btn.remove();
+        const card = document.getElementById(`email-subject-${id}`)?.closest('.email-card');
+        if (card) {
+          const statusDiv = card.querySelector('.email-status');
+          if (statusDiv && !statusDiv.querySelector('.badge-primary')) {
+            const badge = document.createElement('span');
+            badge.className = 'badge badge-primary';
+            badge.textContent = 'Replied';
+            statusDiv.appendChild(badge);
+          }
+        }
+        showMessage('Marked as replied.', 'success');
+      } else { showMessage('Failed to mark as replied.', 'error'); }
     } catch { showMessage('Network error.', 'error'); }
   }
 </script>

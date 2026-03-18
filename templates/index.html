@@ -228,8 +228,8 @@
     try {
       const res = await fetch(`/report/${_reportEmailId}`, { method: 'POST', body: fd });
       const data = await res.json();
-      closeReportModal();
       if (data.success) {
+        closeReportModal();
         showMessage(data.message, 'success');
         const reportBtn = document.querySelector(`.btn-report[data-id="${_reportEmailId}"]`);
         if (reportBtn) { reportBtn.disabled = true; reportBtn.textContent = '✓ Reported'; }
