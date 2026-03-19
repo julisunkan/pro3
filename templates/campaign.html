@@ -89,6 +89,7 @@
           <td>
             <button class="btn btn-primary btn-xs" onclick="runCampaign({{ c.id }}, this)">▶ Run</button>
             <a href="/campaigns/{{ c.id }}/emails" class="btn btn-secondary btn-xs">📧 Emails</a>
+            <button class="btn btn-danger btn-xs" onclick="deleteCampaign({{ c.id }}, this)">🗑 Delete</button>
           </td>
         </tr>
         {% endfor %}
@@ -123,6 +124,41 @@
       btn.textContent = '➕ Create Campaign';
     }
   });
+
+  async function deleteCampaign(id, btn) {
+    const cell = btn.parentElement;
+    const original = cell.innerHTML;
+
+    cell.innerHTML = `
+      <span style="font-size:0.85rem; margin-right:6px;">Delete campaign + all its emails?</span>
+      <button class="btn btn-danger btn-xs" id="confirm-del-${id}">✔ Yes</button>
+      <button class="btn btn-secondary btn-xs" id="cancel-del-${id}">✖ No</button>
+    `;
+
+    document.getElementById(`cancel-del-${id}`).addEventListener('click', () => {
+      cell.innerHTML = original;
+    });
+
+    document.getElementById(`confirm-del-${id}`).addEventListener('click', async () => {
+      const row = cell.closest('tr');
+      cell.innerHTML = `<span style="font-size:0.85rem;">⏳ Deleting...</span>`;
+      try {
+        const res = await fetch(`/campaigns/delete/${id}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          row?.remove();
+          showMessage(data.message, 'success');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          cell.innerHTML = original;
+          showMessage(data.message || 'Delete failed.', 'error');
+        }
+      } catch {
+        cell.innerHTML = original;
+        showMessage('Network error.', 'error');
+      }
+    });
+  }
 
   async function runCampaign(id, btn) {
     const cell = btn.parentElement;

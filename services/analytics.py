@@ -2,10 +2,17 @@ import sqlite3
 import config
 
 
-def get_campaign_analytics(campaign_id: int) -> dict:
-    """Return analytics metrics for a given campaign."""
+def _get_db():
     db = sqlite3.connect(config.DATABASE_PATH)
     db.row_factory = sqlite3.Row
+    db.execute('PRAGMA journal_mode=WAL')
+    db.execute('PRAGMA foreign_keys=ON')
+    return db
+
+
+def get_campaign_analytics(campaign_id: int) -> dict:
+    """Return analytics metrics for a given campaign."""
+    db = _get_db()
 
     row = db.execute(
         '''SELECT

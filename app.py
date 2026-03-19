@@ -135,6 +135,15 @@ def campaigns():
     return render_template('campaign.html', campaigns=campaigns)
 
 
+@app.route('/campaigns/delete/<int:campaign_id>', methods=['POST'])
+def delete_campaign(campaign_id):
+    db = get_db()
+    db.execute('DELETE FROM emails WHERE campaign_id = ?', (campaign_id,))
+    db.execute('DELETE FROM campaigns WHERE id = ?', (campaign_id,))
+    db.commit()
+    return jsonify({'success': True, 'message': 'Campaign deleted.'})
+
+
 @app.route('/campaigns/create', methods=['POST'])
 def create_campaign_route():
     name = request.form.get('name', '').strip()
@@ -409,6 +418,16 @@ def service_worker():
     response.headers['Service-Worker-Allowed'] = '/'
     response.headers['Content-Type'] = 'application/javascript'
     return response
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('error.html', code=404, message='Page not found.'), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('error.html', code=500, message='An internal server error occurred.'), 500
 
 
 if __name__ == '__main__':
