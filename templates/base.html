@@ -9,36 +9,21 @@
   <link rel="icon" href="/static/icons/icon-512.png" type="image/png" />
   <link rel="apple-touch-icon" href="/static/icons/icon-512.png" />
   <title>{% block title %}Cold Email Generator{% endblock %}</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/style.css?v=2" />
 </head>
 <body>
-  <!-- Sidebar Navigation -->
-  <nav class="sidebar">
-    <div class="sidebar-brand">
-      <span class="brand-icon">✉️</span>
-      <span class="brand-text">Cold Email<br><small>Generator</small></span>
+
+  <!-- Top Header Bar -->
+  <header class="topnav">
+    <div class="topnav-brand">
+      <span class="topnav-icon">✉️</span>
+      <span class="topnav-title">Cold Email <span class="topnav-sub">Generator</span></span>
     </div>
-    <ul class="nav-links">
-      <li><a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
-        <span class="nav-icon">🏠</span> Generator
-      </a></li>
-      <li><a href="/leads" class="nav-link {% if request.path.startswith('/leads') %}active{% endif %}">
-        <span class="nav-icon">👥</span> Leads
-      </a></li>
-      <li><a href="/campaigns" class="nav-link {% if request.path.startswith('/campaigns') %}active{% endif %}">
-        <span class="nav-icon">📢</span> Campaigns
-      </a></li>
-      <li><a href="/analytics" class="nav-link {% if request.path.startswith('/analytics') %}active{% endif %}">
-        <span class="nav-icon">📊</span> Analytics
-      </a></li>
-    </ul>
-  </nav>
+    <div class="topnav-page">{% block page_title %}{% endblock %}</div>
+  </header>
 
   <!-- Main Content -->
   <main class="main-content">
-    <div class="topbar">
-      <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
-    </div>
 
     <!-- Inline message container -->
     <div id="message" class="message-container" style="display:none"></div>
@@ -54,8 +39,27 @@
     {% block content %}{% endblock %}
   </main>
 
+  <!-- Bottom Tab Bar -->
+  <nav class="bottom-nav">
+    <a href="/" class="bottom-nav-item {% if request.path == '/' %}active{% endif %}">
+      <span class="bottom-nav-icon">🏠</span>
+      <span class="bottom-nav-label">Generator</span>
+    </a>
+    <a href="/leads" class="bottom-nav-item {% if request.path.startswith('/leads') %}active{% endif %}">
+      <span class="bottom-nav-icon">👥</span>
+      <span class="bottom-nav-label">Leads</span>
+    </a>
+    <a href="/campaigns" class="bottom-nav-item {% if request.path.startswith('/campaigns') %}active{% endif %}">
+      <span class="bottom-nav-icon">📢</span>
+      <span class="bottom-nav-label">Campaigns</span>
+    </a>
+    <a href="/analytics" class="bottom-nav-item {% if request.path.startswith('/analytics') %}active{% endif %}">
+      <span class="bottom-nav-icon">📊</span>
+      <span class="bottom-nav-label">Analytics</span>
+    </a>
+  </nav>
+
   <script>
-    // ── Inline message helper ──
     function showMessage(text, type) {
       const el = document.getElementById('message');
       el.className = 'message-container alert alert-' + (type || 'info');
@@ -64,7 +68,6 @@
       setTimeout(() => { el.style.display = 'none'; }, 5000);
     }
 
-    // ── Register service worker ──
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
         .catch(() => {});

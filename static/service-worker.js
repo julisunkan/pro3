@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cold-email-v1';
+const CACHE_NAME = 'cold-email-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/static/style.css',
